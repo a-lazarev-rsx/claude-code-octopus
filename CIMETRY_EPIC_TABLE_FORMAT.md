@@ -44,3 +44,7 @@
 - User management and LDAP sync
 - Performance optimization
 - Comprehensive documentation
+
+### Upcoming Features (Near Future)
+- **Release Activities Tracking and Analytics** - Comprehensive tracking of release activities with detailed analytics for release quality and deployment metrics
+- **Test Analysis Tool for R&D Tasks** - Automated tool for creating test analysis of all tasks performed by R&D teams, providing insights into testing coverage and quality
