@@ -1,6 +1,5 @@
 ---
 description: Create a git commit with all staged changes
-allowed-tools: Bash
 ---
 
 # Git Commit
@@ -8,11 +7,11 @@ allowed-tools: Bash
 Create a git commit with the provided message or auto-generated message based on changes.
 
 ## Instructions:
-1. Check git status: !`git status --porcelain`
-2. If there are unstaged changes, stage them: !`git add -A`
-3. Show what will be committed: !`git diff --cached --stat`
+1. Check git status
+2. If there are unstaged changes, stage them
+3. Show what will be committed
 4. Create commit with provided message or auto-generate based on changes
-5. Show the created commit: !`git log -1 --oneline`
+5. Show the created commit
 
 ## Commit message format:
 - Use conventional commits format when possible (feat:, fix:, docs:, etc.)
