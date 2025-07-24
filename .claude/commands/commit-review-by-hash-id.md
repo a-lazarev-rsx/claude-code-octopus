@@ -10,12 +10,13 @@ Analyze code changes in specific commit(s) by commit hash(es).
 ## Parse commit hashes from arguments: $ARGUMENTS
 
 ## Instructions:
-1. Validate commit hash(es): !`echo "$ARGUMENTS" | tr ' ' '\n' | while read hash; do git rev-parse --verify "$hash" 2>/dev/null || echo "Invalid hash: $hash"; done`
-2. For each valid commit hash:
-   - Show commit info: !`git show --stat --format=fuller $ARGUMENTS`
-   - Get the diff for each commit: !`for hash in $ARGUMENTS; do echo "=== Commit: $hash ==="; git show $hash; echo ""; done`
-   - List modified files: !`git diff-tree --no-commit-id --name-only -r $ARGUMENTS`
-   - Show commit message and metadata: !`git log -1 --pretty=format:"Commit: %H%nAuthor: %an <%ae>%nDate: %ad%nMessage: %s%n%b" $ARGUMENTS`
+1. Parse commit hash(es) from: $ARGUMENTS
+2. For each commit hash, analyze the changes using appropriate git commands
+3. Gather all necessary information about the commit(s) including:
+   - Commit metadata (author, date, message)
+   - Files changed
+   - Actual code changes (diff)
+   - Statistics about the changes
 
 ## Perform comprehensive code review covering:
 - **Code quality and best practices**
