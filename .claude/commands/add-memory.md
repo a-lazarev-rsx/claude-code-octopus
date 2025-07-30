@@ -9,15 +9,18 @@ Use MCP memory to store, retrieve, and manage information with validation.
 
 ## Instructions:
 1. **Parse additional instructions** from: $ARGUMENTS
-2. **Validate input data** before storing:
+2. **Translate to English** if needed:
+   - All data must be stored in English
+   - Translate non-English content before storing
+3. **Validate input data** before storing:
    - Check data format and structure
    - Verify required fields are present
    - Ensure data consistency
-3. **Execute memory operations** based on instructions
-4. **Validate results** after operations:
+4. **Execute memory operations** based on instructions
+5. **Validate results** after operations:
    - Confirm data was stored/retrieved correctly
    - Check for any discrepancies
-5. **Handle validation failures**:
+6. **Handle validation failures**:
    - If data validation fails, ask user whether to:
      - Continue with current data
      - Correct the data and retry
