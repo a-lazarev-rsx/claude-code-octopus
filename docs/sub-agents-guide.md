@@ -5,7 +5,10 @@
 2. [Creating Sub-Agents](#creating-sub-agents)
 3. [Managing Sub-Agents](#managing-sub-agents)
 4. [Using Sub-Agents](#using-sub-agents)
-5. [Examples and Best Practices](#examples-and-best-practices)
+5. [Hook System](#hook-system)
+6. [Integration with MCP](#integration-with-mcp)
+7. [Examples and Best Practices](#examples-and-best-practices)
+8. [Advanced Use Cases](#advanced-use-cases)
 
 ## What are Sub-Agents
 
@@ -13,12 +16,14 @@ Sub-agents are specialized AI assistants in Claude Code that:
 - Have specific purposes and expertise in particular domains
 - Operate in their own context window separate from the main conversation
 - Can be configured with custom system prompts and specific tool access
+- Are part of a flexible subagent framework rather than fixed agent types
 
 ### Key Characteristics
 - Unique name and description
 - Stored as Markdown files in `.claude/agents/` (project-level) or `~/.claude/agents/` (user-level)
 - Can be invoked automatically or explicitly
 - Help preserve main conversation context
+- Support both restricted and full tool access configurations
 
 ## Creating Sub-Agents
 
@@ -29,10 +34,10 @@ Sub-agents are specialized AI assistants in Claude Code that:
 
 ### Step 2: Define agent parameters
 When creating an agent, you need to specify:
-1. **Unique name** - agent identifier
-2. **Detailed description** - what the agent does and when to use it
-3. **Tool access** (optional) - which tools the agent can use
-4. **System prompt** - specific instructions for the agent
+1. **Unique name** - agent identifier (case-sensitive)
+2. **Detailed description** - what the agent does and when to use it (enables automatic delegation)
+3. **Tool access** (optional) - which tools the agent can use (restrict for security and performance)
+4. **System prompt** - specific instructions for the agent's role and approach
 
 ### Agent File Structure
 ```markdown
@@ -86,7 +91,12 @@ rm .claude/agents/unwanted-agent.md
 ## Using Sub-Agents
 
 ### Automatic Delegation
-Claude Code automatically determines when to use an appropriate agent based on context. For example:
+Claude Code automatically determines when to use an appropriate agent based on:
+- Context and task requirements
+- Agent descriptions and capabilities
+- Pattern matching with current workflow
+
+Examples:
 - When errors are detected → debugger is invoked
 - When code is written → code-reviewer is invoked
 - When analyzing data → data-scientist is invoked
@@ -96,6 +106,7 @@ You can explicitly invoke an agent by mentioning its name:
 ```
 "Use the code-reviewer to check this code"
 "Let the debugger look at this error"
+"Have the api-designer create the endpoints"
 ```
 
 ### Task Tool Usage
@@ -107,6 +118,71 @@ Task(
     subagent_type="code-reviewer"
 )
 ```
+
+### Command-Line Options
+- `--continue` - Resume previous conversations with agents
+- `--print` with `--continue` - Non-interactive mode for automated workflows
+
+## Hook System
+
+The Hook System allows customization of agent behavior through pre and post-processing hooks.
+
+### Hook Configuration
+Hooks can be configured in `settings.json` with the following parameters:
+- **`matcher`** - Pattern-based tool name matching (case-sensitive)
+- **`timeout`** - Command execution time limits in seconds
+- **`command`** - Shell command to execute
+
+### Hook Types
+1. **Pre-processing hooks** - Run before tool execution
+2. **Post-processing hooks** - Run after tool completion
+3. **User prompt hooks** - Intercept and modify user inputs
+
+### Example Hook Configuration
+```json
+{
+  "hooks": {
+    "pre-tool": {
+      "matcher": "Write|Edit",
+      "command": "echo 'About to modify file: {file_path}'",
+      "timeout": 5
+    }
+  }
+}
+```
+
+## Integration with MCP
+
+Model Context Protocol (MCP) enables connection to external tools and services.
+
+### Supported MCP Integrations
+- **Development Tools**: GitHub, Sentry, Linear
+- **Documentation**: Notion, Confluence
+- **Databases**: PostgreSQL, MongoDB, SQLite
+- **Cloud Services**: AWS, Google Drive
+- **Communication**: Slack, Discord
+
+### Adding MCP Servers
+```bash
+# Via settings.json
+{
+  "mcpServers": {
+    "github": {
+      "command": "npx",
+      "args": ["@modelcontextprotocol/server-github"],
+      "env": {
+        "GITHUB_TOKEN": "your_token"
+      }
+    }
+  }
+}
+```
+
+### MCP with Sub-Agents
+Sub-agents can leverage MCP tools for enhanced capabilities:
+- Access external data sources
+- Integrate with third-party APIs
+- Utilize specialized services
 
 ## Examples and Best Practices
 
@@ -170,6 +246,45 @@ You are a data analysis expert. Help with:
 Provide clear explanations and practical examples.
 ```
 
+#### 4. API Designer
+```markdown
+---
+name: api-designer
+description: API design and implementation specialist for RESTful and GraphQL services.
+tools: [Read, Write, Edit, Grep]
+---
+
+# API Design Expert
+
+You specialize in API design and implementation:
+- Design RESTful endpoints following best practices
+- Create OpenAPI/Swagger specifications
+- Implement GraphQL schemas
+- Ensure proper authentication and rate limiting
+
+Follow REST principles and industry standards.
+```
+
+#### 5. Performance Optimizer
+```markdown
+---
+name: performance-optimizer
+description: Performance analysis and optimization specialist.
+tools: [Read, Bash, Grep, Edit]
+---
+
+# Performance Optimization Expert
+
+Focus on identifying and resolving performance bottlenecks:
+- Analyze code for inefficiencies
+- Profile application performance
+- Optimize database queries
+- Implement caching strategies
+- Reduce bundle sizes
+
+Provide measurable improvements with benchmarks.
+```
+
 ### Best Practices
 
 #### 1. Create Focused Agents
@@ -205,6 +320,171 @@ If an agent doesn't work as expected:
 3. Verify access to specified tools
 4. Review system prompt for clarity
 
+## Advanced Use Cases
+
+### 1. SRE Incident Response
+Create specialized agents for site reliability engineering:
+```markdown
+---
+name: sre-incident-responder
+description: Handles production incidents, analyzes logs, and implements fixes.
+tools: [Bash, Read, Grep, WebFetch]
+---
+
+# SRE Incident Response Specialist
+
+Respond to production incidents by:
+1. Analyzing error logs and metrics
+2. Identifying root causes
+3. Implementing immediate fixes
+4. Creating incident reports
+5. Suggesting prevention measures
+```
+
+### 2. Security Audit Agent
+For automated security reviews:
+```markdown
+---
+name: security-auditor
+description: Performs security audits on code and infrastructure.
+tools: [Read, Grep, Bash, WebSearch]
+---
+
+# Security Audit Expert
+
+Conduct thorough security reviews:
+- Check for OWASP Top 10 vulnerabilities
+- Analyze dependencies for known CVEs
+- Review authentication and authorization
+- Identify sensitive data exposure
+- Suggest security improvements
+```
+
+### 3. Legal Document Reviewer
+For compliance and legal requirements:
+```markdown
+---
+name: legal-reviewer
+description: Reviews code for licensing and compliance issues.
+tools: [Read, Grep, WebSearch]
+---
+
+# Legal Compliance Specialist
+
+Review code for:
+- License compatibility
+- Copyright compliance
+- Privacy regulations (GDPR, CCPA)
+- Export control requirements
+- Third-party attribution
+```
+
+### 4. Team-Specific Workflows
+
+#### Creating Team Standards Agent
+```markdown
+---
+name: team-standards
+description: Enforces team-specific coding standards and practices.
+tools: [Read, Edit, Grep]
+---
+
+# Team Standards Enforcer
+
+Ensure code follows team guidelines:
+- Naming conventions
+- File organization
+- Documentation requirements
+- Testing standards
+- Git commit message format
+```
+
+### 5. Multi-Agent Collaboration
+
+Agents can work together for complex tasks:
+
+```bash
+# Sequential agent collaboration
+"Use the api-designer to create the endpoints, then have the code-reviewer check them"
+
+# Parallel agent work
+"Have the debugger fix the errors while the performance-optimizer analyzes the bottlenecks"
+```
+
+### 6. CI/CD Integration
+
+Integrate agents with continuous integration:
+```yaml
+# .github/workflows/code-review.yml
+name: Automated Code Review
+on: [pull_request]
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Run Claude Code Review
+        run: |
+          claude-code --continue --print "Use code-reviewer to analyze changes"
+```
+
+### 7. Domain-Specific Agents
+
+Create agents for specific domains:
+- **Machine Learning**: Model training and evaluation
+- **DevOps**: Infrastructure as code management
+- **Mobile Development**: iOS/Android specific reviews
+- **Game Development**: Performance and gameplay optimization
+- **Blockchain**: Smart contract auditing
+
+## Environment Variables and Configuration
+
+### Settings.json Configuration
+```json
+{
+  "agents": {
+    "autoDelegate": true,
+    "maxConcurrent": 3,
+    "defaultTimeout": 300
+  },
+  "environment": {
+    "NODE_ENV": "development",
+    "API_KEY": "${SECRET_API_KEY}"
+  }
+}
+```
+
+### Team Configuration Rollout
+For team-wide agent deployment:
+1. Create shared agents in version control
+2. Document agent purposes and usage
+3. Set up automated agent updates
+4. Monitor agent performance and usage
+
+## Troubleshooting
+
+### Common Issues and Solutions
+
+1. **Agent Not Found**
+   - Check file location (`.claude/agents/` or `~/.claude/agents/`)
+   - Verify YAML syntax in frontmatter
+   - Ensure unique agent name
+
+2. **Tool Access Denied**
+   - Review tool restrictions in agent configuration
+   - Check if tools are available in environment
+   - Verify MCP server connections
+
+3. **Automatic Delegation Not Working**
+   - Make description more specific
+   - Include trigger keywords in description
+   - Check `autoDelegate` setting in configuration
+
+4. **Performance Issues**
+   - Limit tool access to necessary ones
+   - Reduce concurrent agent limit
+   - Optimize system prompts for clarity
+
 ## Conclusion
 
-Sub-agents in Claude Code are a powerful tool for extending capabilities and specialization. Properly configured agents can significantly improve code work efficiency by providing expert assistance in specific domains.
+Sub-agents in Claude Code provide a flexible framework for creating specialized AI assistants tailored to your development workflow. By leveraging the subagent system, hooks, and MCP integrations, teams can build powerful automation and assistance tools that significantly improve productivity and code quality. The key is to create focused, well-configured agents that align with your specific needs and workflows.
