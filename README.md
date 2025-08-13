@@ -14,20 +14,63 @@ Advanced configuration and extension framework for Claude Code CLI, providing po
 
 ```
 claude-code-octopus/
-├── docs/                         # Documentation
-│   ├── sub-agents-guide.md      # Complete guide for creating and using sub-agents
-│   ├── hooks-guide.md           # Hook system documentation
-│   └── custom-slash-commands.md # Creating custom slash commands
-├── projects-rnd/                 # Project research and development
-│   ├── JIRA_EPIC_CIMETRY.md
-│   ├── CIMETRY_EPIC_TABLE_FORMAT.md
-│   └── TEAM_SERVER_STAGE_EPIC_TABLE_FORMAT.md
-├── backup_rules/                 # Backup configurations
-│   └── cimetry/
-│       └── CLAUDE.md
-├── working-files/                # Temporary working directory
-├── CLAUDE.md                     # Claude Code configuration
-└── LICENSE                       # MIT License
+├── .claude/                              # Claude Code configuration
+│   ├── agents/                           # Sub-agents definitions
+│   │   ├── code-review-agents/          # Code review specialists
+│   │   │   ├── bug-detector.md
+│   │   │   ├── code-quality-reviewer.md
+│   │   │   ├── performance-reviewer.md
+│   │   │   ├── security-reviewer.md
+│   │   │   └── testing-reviewer.md
+│   │   ├── planning-agents/             # Planning specialists
+│   │   │   ├── planning-best-practices.md
+│   │   │   ├── planning-bug-prevention.md
+│   │   │   ├── planning-ci-cd.md
+│   │   │   ├── planning-documentation.md
+│   │   │   ├── planning-implementation.md
+│   │   │   ├── planning-performance-architect.md
+│   │   │   ├── planning-quality-advisor.md
+│   │   │   ├── planning-security-architect.md
+│   │   │   └── planning-testing-strategist.md
+│   │   ├── confluence-searcher.md       # Confluence search agent
+│   │   ├── lint-type-checker.md         # Linting and type checking
+│   │   ├── memory-manager.md            # Memory operations
+│   │   └── pdf-analyzer.md              # PDF analysis
+│   ├── commands/                         # Custom slash commands
+│   │   ├── code-review/                 # Code review commands
+│   │   │   ├── agentic-code-review.md
+│   │   │   ├── commit-review-by-hash-id.md
+│   │   │   └── pr-review.md
+│   │   ├── context-memory/              # Memory management
+│   │   │   ├── add-memory.md
+│   │   │   └── read-memory.md
+│   │   ├── planning/                    # Planning commands
+│   │   │   ├── agentic-plan-implementation.md
+│   │   │   └── jira-task-analyze.md
+│   │   ├── research/                    # Research commands
+│   │   │   ├── find-solution.md
+│   │   │   └── use-context7.md
+│   │   ├── testing/                     # Testing commands
+│   │   │   ├── test-app-playwright.md
+│   │   │   └── use-playwright-mcp.md
+│   │   ├── analyze-docs.md
+│   │   ├── create-commit.md
+│   │   ├── quality-check-python.md
+│   │   └── translate-jira-issue-english.md
+│   ├── settings.json                    # Project settings
+│   └── settings.local.json              # Local settings (gitignored)
+├── .github/                              # GitHub configuration
+│   └── workflows/                       # GitHub Actions
+│       ├── claude-code-review.yml       # Automated code review
+│       └── claude.yml                    # Claude integration
+├── docs/                                 # Documentation
+│   ├── sub-agents-guide.md              # Complete guide for creating and using sub-agents
+│   ├── hooks-guide.md                   # Hook system documentation
+│   └── custom-slash-commands.md         # Creating custom slash commands
+├── .gitignore                            # Git ignore file
+├── CLAUDE.md                             # Claude Code configuration
+├── LICENSE                               # MIT License
+└── README.md                             # This file
 ```
 
 ## 🛠️ Installation
