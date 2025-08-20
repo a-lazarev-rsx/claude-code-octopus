@@ -1,5 +1,8 @@
 # Sub-Agents Guide for Claude Code
 
+> **Official Documentation**: [Claude Code Sub-Agents](https://docs.anthropic.com/en/docs/claude-code/sub-agents)
+> [Common Workflows](https://docs.anthropic.com/en/docs/claude-code/common-workflows)
+
 ## Table of Contents
 1. [What are Sub-Agents](#what-are-sub-agents)
 2. [Creating Sub-Agents](#creating-sub-agents)
@@ -14,9 +17,10 @@
 
 Sub-agents are specialized AI assistants in Claude Code that:
 - Have specific purposes and expertise in particular domains
-- Operate in their own context window separate from the main conversation
+- Operate in separate context windows from the main conversation, helping preserve context
 - Can be configured with custom system prompts and specific tool access
-- Are part of a flexible subagent framework rather than fixed agent types
+- Enable automatic delegation based on task requirements
+- Are stored as Markdown files with YAML frontmatter for configuration
 
 ### Key Characteristics
 - Unique name and description
@@ -31,6 +35,7 @@ Sub-agents are specialized AI assistants in Claude Code that:
 ```bash
 /agents
 ```
+This opens the subagent interface where you can list existing agents and create new ones.
 
 ### Step 2: Define agent parameters
 When creating an agent, you need to specify:
@@ -42,9 +47,9 @@ When creating an agent, you need to specify:
 ### Agent File Structure
 ```markdown
 ---
-name: code-reviewer
-description: Expert code review specialist. Proactively reviews code for quality, security, and maintainability.
-tools: [Read, Grep, Glob]
+name: agent-identifier
+description: Clear description of agent's purpose and when it should be used
+tools: [Read, Grep, Glob] # Optional - if not specified, inherits all tools
 ---
 
 # System Prompt
@@ -91,10 +96,11 @@ rm .claude/agents/unwanted-agent.md
 ## Using Sub-Agents
 
 ### Automatic Delegation
-Claude Code automatically determines when to use an appropriate agent based on:
-- Context and task requirements
-- Agent descriptions and capabilities
-- Pattern matching with current workflow
+Claude Code automatically delegates to appropriate agents based on:
+- Task requirements matching agent descriptions
+- Context analysis of the current request
+- Agent capabilities and tool access
+- The description field is crucial for enabling automatic delegation
 
 Examples:
 - When errors are detected → debugger is invoked
@@ -110,18 +116,20 @@ You can explicitly invoke an agent by mentioning its name:
 ```
 
 ### Task Tool Usage
-When using the Task tool, you must specify the agent type:
+When using the Task tool programmatically, specify the subagent_type parameter:
 ```python
 Task(
     description="Review authentication code",
     prompt="Check the security of the login implementation",
-    subagent_type="code-reviewer"
+    subagent_type="code-reviewer"  # Must match agent name exactly
 )
 ```
 
 ### Command-Line Options
-- `--continue` - Resume previous conversations with agents
-- `--print` with `--continue` - Non-interactive mode for automated workflows
+- `/agents` - Open agent management interface
+- `claude --continue` - Resume previous conversations
+- `claude --print` with `--continue` - Non-interactive mode for automated workflows
+- Agents are accessible in both interactive and SDK modes
 
 ## Hook System
 
@@ -153,7 +161,7 @@ Hooks can be configured in `settings.json` with the following parameters:
 
 ## Integration with MCP
 
-Model Context Protocol (MCP) enables connection to external tools and services.
+Model Context Protocol (MCP) is an open-source standard that enables connection to external tools and services. Sub-agents can leverage MCP servers for enhanced capabilities.
 
 ### Supported MCP Integrations
 - **Development Tools**: GitHub, Sentry, Linear
@@ -164,14 +172,17 @@ Model Context Protocol (MCP) enables connection to external tools and services.
 
 ### Adding MCP Servers
 ```bash
-# Via settings.json
+# Using CLI
+claude mcp add --transport stdio github npx @modelcontextprotocol/server-github
+
+# Or via settings.json
 {
   "mcpServers": {
     "github": {
       "command": "npx",
       "args": ["@modelcontextprotocol/server-github"],
       "env": {
-        "GITHUB_TOKEN": "your_token"
+        "GITHUB_TOKEN": "${GITHUB_TOKEN}"  # Uses environment variable
       }
     }
   }
@@ -290,6 +301,7 @@ Provide measurable improvements with benchmarks.
 #### 1. Create Focused Agents
 - One agent = one area of responsibility
 - Avoid creating "universal" agents
+- Use descriptive names that clearly indicate purpose
 
 #### 2. Write Detailed System Prompts
 - Clearly define role and objectives
@@ -298,7 +310,9 @@ Provide measurable improvements with benchmarks.
 
 #### 3. Limit Tool Access
 - Grant access only to necessary tools
-- This improves security and performance
+- This improves both security and performance
+- Use the principle of least privilege
+- Consider read-only tools for review agents
 
 #### 4. Use Version Control
 - Add project agents to git
@@ -309,16 +323,19 @@ Provide measurable improvements with benchmarks.
 - Iteratively improve prompts
 
 ### Performance Considerations
-- Sub-agents help preserve main conversation context
-- May add slight latency on first invocation
-- Efficient for specialized tasks
+- Sub-agents help preserve main conversation context by operating in separate windows
+- May add slight latency on first invocation while loading agent configuration
+- More efficient for specialized tasks than using the main agent
+- Tool restrictions can improve response time
 
 ### Debugging
 If an agent doesn't work as expected:
-1. Check YAML syntax in file header
-2. Ensure agent name is unique
-3. Verify access to specified tools
-4. Review system prompt for clarity
+1. Check YAML syntax in file header (must be valid YAML)
+2. Ensure agent name is unique and contains no special characters
+3. Verify access to specified tools in settings
+4. Review system prompt for clarity and specificity
+5. Use `claude --debug` to see detailed execution logs
+6. Check file location (`.claude/agents/` or `~/.claude/agents/`)
 
 ## Advanced Use Cases
 
@@ -437,19 +454,24 @@ Create agents for specific domains:
 - **Game Development**: Performance and gameplay optimization
 - **Blockchain**: Smart contract auditing
 
-## Environment Variables and Configuration
+## Configuration and Settings
 
-### Settings.json Configuration
+### Settings Hierarchy
+1. Enterprise managed policies (highest priority)
+2. User settings (`~/.claude/settings.json`)
+3. Project settings (`.claude/settings.json`)
+4. Local settings (`.claude/settings.local.json`)
+
+### Agent-Related Configuration
 ```json
 {
-  "agents": {
-    "autoDelegate": true,
-    "maxConcurrent": 3,
-    "defaultTimeout": 300
+  "permissions": {
+    "allow": ["Task"],  // Allow agent invocation
+    "deny": [],
+    "ask": []
   },
-  "environment": {
-    "NODE_ENV": "development",
-    "API_KEY": "${SECRET_API_KEY}"
+  "env": {
+    "CLAUDE_PROJECT_DIR": "/path/to/project"
   }
 }
 ```
@@ -488,3 +510,11 @@ For team-wide agent deployment:
 ## Conclusion
 
 Sub-agents in Claude Code provide a flexible framework for creating specialized AI assistants tailored to your development workflow. By leveraging the subagent system, hooks, and MCP integrations, teams can build powerful automation and assistance tools that significantly improve productivity and code quality. The key is to create focused, well-configured agents that align with your specific needs and workflows.
+
+## References
+
+- [Official Sub-Agents Documentation](https://docs.anthropic.com/en/docs/claude-code/sub-agents)
+- [Common Workflows Guide](https://docs.anthropic.com/en/docs/claude-code/common-workflows)
+- [MCP Documentation](https://docs.anthropic.com/en/docs/claude-code/mcp)
+- [CLI Reference](https://docs.anthropic.com/en/docs/claude-code/cli-reference)
+- [Settings Configuration](https://docs.anthropic.com/en/docs/claude-code/settings)

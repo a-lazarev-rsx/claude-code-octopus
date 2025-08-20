@@ -1,5 +1,9 @@
 # Hooks Guide for Claude Code
 
+> **Official Documentation**: [Claude Code Hooks](https://docs.anthropic.com/en/docs/claude-code/hooks)
+> 
+> ⚠️ **Security Warning**: Hooks execute arbitrary commands on your system. USE AT YOUR OWN RISK.
+
 ## Table of Contents
 1. [What are Hooks](#what-are-hooks)
 2. [Configuration](#configuration)
@@ -12,7 +16,7 @@
 
 ## What are Hooks
 
-Hooks are automated scripts that execute in response to specific events in Claude Code, allowing you to:
+Hooks are configurable scripts that execute at specific points during Claude Code's workflow. According to the official documentation, hooks are "an open-source standard" that allows developers to:
 - Validate and block dangerous operations before they execute
 - Add automated checks and formatting after file modifications
 - Inject additional context into conversations
@@ -36,11 +40,11 @@ Hooks are automated scripts that execute in response to specific events in Claud
 ## Configuration
 
 ### Settings File Locations
-Hooks are configured in JSON settings files:
-- **User settings**: `~/.claude/settings.json`
-- **Project settings**: `.claude/settings.json`
-- **Local settings**: `.claude/settings.local.json` (not committed)
-- **Enterprise settings**: Managed policy files
+Hooks are configured in JSON settings files (in order of precedence):
+1. **Enterprise managed policies**: `/Library/Application Support/ClaudeCode/managed-settings.json` (highest priority)
+2. **User settings**: `~/.claude/settings.json` (global across all projects)
+3. **Project settings**: `.claude/settings.json` (shared with team via version control)
+4. **Local settings**: `.claude/settings.local.json` (personal, not committed to version control)
 
 ### Basic Structure
 ```json
@@ -65,8 +69,9 @@ Hooks are configured in JSON settings files:
 ### Configuration Elements
 - **EventName**: The event that triggers the hook (e.g., `PreToolUse`, `PostToolUse`)
 - **matcher**: Pattern to match tool names (regex supported, case-sensitive)
-- **command**: Shell command to execute
+- **command**: Shell command to execute (can use environment variables like `$CLAUDE_PROJECT_DIR`)
 - **timeout**: Optional timeout in seconds (default: 60)
+- **type**: Must be "command" for shell execution
 
 ### Matcher Patterns
 ```json
@@ -509,11 +514,12 @@ except Exception as e:
 ## Security and Best Practices
 
 ### Security Warning
-⚠️ **CRITICAL**: Hooks execute arbitrary commands on your system. They can:
+⚠️ **CRITICAL**: As stated in the official documentation, hooks "USE AT YOUR OWN RISK". They can:
 - Modify or delete any files your user can access
-- Execute system commands
+- Execute system commands with your user permissions
 - Access network resources
-- Potentially cause data loss
+- Potentially cause data loss or system compromise
+- Be exploited through prompt injection if using untrusted sources
 
 ### Security Best Practices
 
@@ -556,9 +562,10 @@ echo "$(date): $TOOL_NAME on $FILE_PATH" >> ~/.claude/audit.log
 ```
 
 ### Configuration Safety
-- Settings are snapshotted at session start
-- External modifications require `/hooks` review
-- Changes don't affect running sessions
+- Settings are captured at session start and cached
+- External modifications require using `/hooks` command to review changes
+- Changes to settings files don't affect running sessions
+- Use `claude --debug` to verify hook execution
 
 ### Testing Hooks
 1. Test commands manually first
@@ -574,7 +581,7 @@ echo "$(date): $TOOL_NAME on $FILE_PATH" >> ~/.claude/audit.log
 claude --debug
 ```
 
-Shows detailed hook execution:
+Shows detailed hook execution logs including:
 ```
 [DEBUG] Executing hooks for PostToolUse:Write
 [DEBUG] Found 1 hook matchers in settings
@@ -624,15 +631,19 @@ echo "Exit code: $?"
 
 ### Viewing Hook Configuration
 ```bash
-# Check active hooks
+# Check active hooks in Claude Code
 /hooks
 
-# View settings file
+# View settings file with jq
 cat ~/.claude/settings.json | jq '.hooks'
 
 # List hook scripts
 ls -la ~/.claude/hooks/
 ls -la .claude/hooks/
+
+# Use claude config to manage settings
+claude config get hooks
+claude config set hooks.PreToolUse[0].matcher "Bash"
 ```
 
 ### Hook Execution Order
@@ -763,3 +774,10 @@ jobs:
 Hooks provide powerful automation and control over Claude Code's behavior. By understanding hook events, input/output formats, and best practices, you can create sophisticated workflows that enhance productivity while maintaining security and code quality. Start with simple hooks and gradually build more complex automation as you become familiar with the system.
 
 Remember: **Always test hooks carefully and never trust untrusted hook configurations**, as they have full access to your system with your user permissions.
+
+## References
+
+- [Official Claude Code Hooks Documentation](https://docs.anthropic.com/en/docs/claude-code/hooks)
+- [Settings Configuration Guide](https://docs.anthropic.com/en/docs/claude-code/settings)
+- [CLI Reference](https://docs.anthropic.com/en/docs/claude-code/cli-reference)
+- [Security Best Practices](https://docs.anthropic.com/en/docs/claude-code/security)

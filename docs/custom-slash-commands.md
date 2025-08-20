@@ -1,8 +1,10 @@
 # Creating Custom Slash Commands in Claude Code
 
+> **Official Documentation**: [Claude Code Slash Commands](https://docs.anthropic.com/en/docs/claude-code/slash-commands)
+
 ## Overview
 
-Custom slash commands allow you to create reusable commands for Claude Code that can be invoked via `/command-name` in the interface.
+Custom slash commands allow you to create reusable commands for Claude Code that can be invoked via `/command-name` in the interface. These commands enable automation of common tasks and provide a way to extend Claude Code's functionality with custom workflows.
 
 ## File Structure
 
@@ -12,19 +14,19 @@ Custom commands are stored as Markdown files in two locations:
 
 ## Command Format
 
-Each command is a `.md` file where:
+Each command is a Markdown (`.md`) file where:
 - **File name** defines the command name (e.g., `translate-jira.md` creates the `/translate-jira` command)
-- **YAML frontmatter** (optional) for metadata
-- **Markdown content** contains command instructions
+- **YAML frontmatter** (optional) for metadata and configuration
+- **Markdown content** contains the actual command instructions and logic
 
 ## Command File Structure
 
 ```markdown
 ---
-allowed-tools: Tool1, Tool2(specific-usage)
+allowed-tools: Bash(git add:*), Bash(git status:*), Read, Write
 description: Brief command description
-argument-hint: Argument hint (e.g., "issue-key or URL")
-model: opus | sonnet | haiku (optional - AI model selection)
+argument-hint: [parameter description]
+model: claude-3-5-sonnet-20241022 | claude-3-5-haiku-20241022 (optional)
 ---
 
 # Command Title
@@ -67,6 +69,7 @@ You can specify a model in frontmatter for command execution:
 - `model: opus` - for complex tasks
 - `model: sonnet` - balanced model (default)
 - `model: haiku` - for quick simple tasks
+- If not specified, uses the current conversation model
 
 ### 6. Argument Hints
 Use `argument-hint` in frontmatter to provide contextual hints:
@@ -123,12 +126,18 @@ In Claude Code, type:
 
 ## Settings and Permissions
 
-In `.claude/settings.local.json` file you can specify tool permissions:
+Configure tool permissions in settings files (hierarchy from most to least specific):
+1. **Enterprise managed policies**: `/Library/Application Support/ClaudeCode/managed-settings.json`
+2. **User settings**: `~/.claude/settings.json`
+3. **Project settings**: `.claude/settings.json` (shared)
+4. **Local settings**: `.claude/settings.local.json` (personal, not in version control)
+
 ```json
 {
   "permissions": {
     "allow": ["mcp__atlassian__editJiraIssue", "Bash(npm run lint)"],
-    "deny": []
+    "deny": [],
+    "ask": ["Write", "Edit"]
   }
 }
 ```
@@ -210,19 +219,43 @@ Suggest optimizations
 
 Claude Code provides several built-in commands:
 - `/config` - manage configuration settings
-- `/bug` - report bugs (can be disabled via environment variable)
+- `/bug` - report bugs to GitHub issues
 - `/help` - get help with using Claude Code
+- `/agents` - list and create custom agents
+- `/mcp` - configure MCP servers
+- `/hooks` - review hook configuration
+- `/compact` - manually trigger context compaction
+- `/clear` - clear conversation history
 
 ## Personal vs Project Commands
 
-- **Project commands** (`.claude/commands/`) - visible to all project participants
-- **Personal commands** (`~/.claude/commands/`) - visible only to you, displayed with "(user)" label
+- **Project commands** (`.claude/commands/`) - shared with team via version control
+- **Personal commands** (`~/.claude/commands/`) - private to your user account
+- When both exist with the same name, conflicts are not currently supported
+- Personal commands are marked in the UI for clarity
 
 ## Debugging
 
 If a command doesn't work:
-1. Check YAML frontmatter syntax
-2. Ensure file is in the correct directory
-3. Verify permissions for used tools
-4. Use `claude mcp list` to check MCP commands
+1. Check YAML frontmatter syntax (must be valid YAML)
+2. Ensure file is in the correct directory (`.claude/commands/` or `~/.claude/commands/`)
+3. Verify permissions for used tools in settings files
+4. Use `claude mcp list` to check available MCP commands
 5. Verify file name is correct (no spaces, special characters)
+6. Run `claude --debug` for detailed execution logs
+7. Check that dynamic content (`!`, `@`, `$ARGUMENTS`) is properly formatted
+
+## Security Considerations
+
+⚠️ **Important**: Custom commands execute with your user permissions
+- Be cautious with commands from untrusted sources
+- Review command content before execution
+- Use `allowed-tools` to restrict tool access
+- Consider using `.claude/settings.local.json` for sensitive configurations
+
+## References
+
+- [Official Claude Code Documentation](https://docs.anthropic.com/en/docs/claude-code)
+- [Slash Commands Guide](https://docs.anthropic.com/en/docs/claude-code/slash-commands)
+- [MCP Documentation](https://docs.anthropic.com/en/docs/claude-code/mcp)
+- [Settings Reference](https://docs.anthropic.com/en/docs/claude-code/settings)
