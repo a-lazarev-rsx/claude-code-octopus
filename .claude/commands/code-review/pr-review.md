@@ -1,42 +1,48 @@
 ---
-description: Perform comprehensive code review for Bitbucket pull request using multiple specialized agents
+description: Perform comprehensive code review for pull request using multiple specialized agents (GitHub/Bitbucket)
 allowed-tools: Task, Bash, Read, Grep
-argument-hint: PR_ID [target_branch]
+argument-hint: PR_NUMBER [target_branch]
 ---
 
-# Bitbucket Pull Request Review with Agents
+# Pull Request Review with Agents
 
-Orchestrates multiple specialized sub-agents to perform comprehensive parallel code review for a Bitbucket pull request.
+Orchestrates multiple specialized sub-agents to perform comprehensive parallel code review for a pull request (supports both GitHub and Bitbucket).
 
-## Parse PR ID and target branch from arguments: $ARGUMENTS
+## Parse PR number and target branch from arguments: $ARGUMENTS
 
 ## Instructions:
 
 1. **Parse arguments**:
-   - Extract PR ID from $ARGUMENTS (required)
-   - Extract target branch if provided (optional, defaults to main/master/develop)
+   - Extract PR number from $ARGUMENTS (required, e.g., "12" or "PR_12" or "PR-12")
+   - Extract target branch if provided (optional, defaults to main/master/trunk/develop)
+   - Clean PR number to numeric value only (remove "PR_", "PR-", etc.)
 
-2. **Fetch PR branch from Bitbucket**:
+2. **Detect repository platform and fetch PR branch**:
    ```bash
-   # Fetch the PR branch
-   git fetch origin pull-requests/{PR_ID}/from:pr-{PR_ID}
+   # First, detect if this is GitHub or Bitbucket by checking remote URL
+   git remote get-url origin
+   # If URL contains github.com: use GitHub format
+   #   git fetch origin pull/{PR_NUMBER}/head:pr-{PR_NUMBER}
+   # If URL contains bitbucket: use Bitbucket format  
+   #   git fetch origin refs/pull-requests/{PR_NUMBER}/from:pr-{PR_NUMBER}
    ```
+   Note: Use the cleaned numeric PR number from step 1
 
 3. **Gather git context for all sub-agents**:
-   - PR branch: `pr-{PR_ID}`
-   - Determine target branch: Use provided branch or detect from: main, master, develop
-   - Get merge base: !`git merge-base pr-{PR_ID} {target_branch}`
-   - List commits in PR: !`git log --oneline {merge_base}..pr-{PR_ID}`
-   - Get full diff: !`git diff {merge_base}...pr-{PR_ID}`
-   - File statistics: !`git diff --stat {merge_base}...pr-{PR_ID}`
-   - Changed files list: !`git diff --name-only {merge_base}...pr-{PR_ID}`
+   - PR branch: `pr-{PR_NUMBER}` (using numeric value from step 1)
+   - Determine target branch: Use provided branch or detect from: main, master, trunk, develop
+   - Get merge base: Execute `git merge-base pr-{PR_NUMBER} {target_branch}` and store result in {merge_base}
+   - List commits in PR: Execute `git log --oneline {merge_base}..pr-{PR_NUMBER}` after getting merge base
+   - Get full diff: Execute `git diff {merge_base}...pr-{PR_NUMBER}` after getting merge base
+   - File statistics: Execute `git diff --stat {merge_base}...pr-{PR_NUMBER}` after getting merge base
+   - Changed files list: Execute `git diff --name-only {merge_base}...pr-{PR_NUMBER}` after getting merge base
 
 4. **Launch all sub-agents in parallel**:
 
 Task(
   description="Code quality review for PR",
   subagent_type="code-quality-reviewer",
-  prompt=f"""Review code quality for Bitbucket Pull Request #{pr_id}
+  prompt=f"""Review code quality for Pull Request #{pr_id}
   
   PR Branch: pr-{pr_id}
   Target Branch: {target_branch}
@@ -80,7 +86,7 @@ Task(
 Task(
   description="Security analysis for PR",
   subagent_type="security-reviewer", 
-  prompt=f"""Analyze security vulnerabilities in Bitbucket Pull Request #{pr_id}
+  prompt=f"""Analyze security vulnerabilities in Pull Request #{pr_id}
   
   PR Branch: pr-{pr_id}
   Target Branch: {target_branch}
@@ -135,7 +141,7 @@ Task(
 Task(
   description="Performance review for PR",
   subagent_type="performance-reviewer",
-  prompt=f"""Review performance implications of Bitbucket Pull Request #{pr_id}
+  prompt=f"""Review performance implications of Pull Request #{pr_id}
   
   PR Branch: pr-{pr_id}
   Target Branch: {target_branch}
@@ -191,7 +197,7 @@ Task(
 Task(
   description="Testing assessment for PR",
   subagent_type="testing-reviewer",
-  prompt=f"""Assess testing coverage and quality for Bitbucket Pull Request #{pr_id}
+  prompt=f"""Assess testing coverage and quality for Pull Request #{pr_id}
   
   PR Branch: pr-{pr_id}
   Target Branch: {target_branch}
@@ -251,7 +257,7 @@ Task(
 Task(
   description="Bug detection for PR",
   subagent_type="bug-detector",
-  prompt=f"""Detect potential bugs and edge cases in Bitbucket Pull Request #{pr_id}
+  prompt=f"""Detect potential bugs and edge cases in Pull Request #{pr_id}
   
   PR Branch: pr-{pr_id}
   Target Branch: {target_branch}
@@ -308,8 +314,8 @@ Task(
 )
 
 5. **Additional context checks** (run in parallel with agents):
-   - Check for uncommitted changes: !`git status --porcelain`
-   - Check for merge conflicts: !`git diff --check pr-{PR_ID}...{target_branch}`
+   - Check for uncommitted changes: Execute `git status --porcelain`
+   - Check for merge conflicts: Execute `git diff --check pr-{PR_NUMBER}...{target_branch}`
    - Check PR size: Count total lines changed and flag if > 500 lines
 
 6. **Aggregate results from all sub-agents**:
@@ -412,4 +418,4 @@ Task(
 3. {Third priority action}
 
 ---
-*Review completed for Bitbucket PR #{pr_id} using 5 specialized analysis agents*
+*Review completed for PR #{pr_id} using 5 specialized analysis agents*
