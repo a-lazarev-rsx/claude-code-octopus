@@ -2,7 +2,7 @@
 description: Comprehensive implementation planning with Context7 research, architecture analysis, and CI/CD planning
 argument-hint: "task description or requirements"
 allowed-tools: Task, Read, Grep, Glob, WebSearch, mcp__context7__*, Bash, LS
-model: opus
+model: claude-opus-4-1
 ---
 
 # Implementation Planning with Context7 and Best Practices

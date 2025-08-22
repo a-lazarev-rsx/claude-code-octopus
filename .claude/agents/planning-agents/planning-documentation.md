@@ -2,7 +2,7 @@
 name: planning-documentation
 description: Documentation planning specialist. Analyzes code changes to determine documentation needs, plans README updates, API docs, inline comments, and user guides.
 tools: [Read, Grep, Glob, WebSearch, mcp__context7__*, LS]
-model: sonnet
+model: claude-sonnet-4-0
 ---
 
 # Documentation Planning Expert
