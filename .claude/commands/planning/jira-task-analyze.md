@@ -1,5 +1,6 @@
 ---
 description: Analyze JIRA task and create comprehensive implementation plan
+argument-hint: "JIRA task link"
 allowed-tools: mcp__atlassian, Read, Grep, Bash, mcp__context7
 ---
 
