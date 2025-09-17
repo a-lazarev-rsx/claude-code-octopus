@@ -163,9 +163,9 @@ string query = $"SELECT * FROM Users WHERE Id = {userId}";
 var result = context.Database.SqlQuery<User>(query);
 
 // After:
-string query = "SELECT * FROM Users WHERE Id = @userId";
-var result = context.Database.SqlQuery<User>(query,
-    new SqlParameter("@userId", userId));
+var result = context.Users
+    .FromSqlRaw("SELECT * FROM Users WHERE Id = @userId", new SqlParameter("@userId", userId))
+    .ToList();
 ```
 
 **2. Fix N+1 Query Problem**
@@ -215,7 +215,8 @@ var result = GetDataAsync().Result;
 // After:
 var result = await GetDataAsync();
 // Or if synchronous context required:
-var result = Task.Run(async () => await GetDataAsync()).Result;
+// Preferred: make the calling method async and use await
+var result = await GetDataAsync().ConfigureAwait(false);
 ```
 
 ### 📝 Action Items Checklist
