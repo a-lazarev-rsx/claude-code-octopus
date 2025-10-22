@@ -1,111 +1,107 @@
-# Claude Code Octopus 🐙
+# Code Agent Octopus 🐙
 
-A comprehensive repository for creating and documenting custom commands, agents, and hooks for [Claude Code CLI](https://docs.anthropic.com/en/docs/claude-code).
+A centralized toolkit for AI coding assistants, providing reusable agents, commands, and workflows that work across multiple CLIs.
 
-## 🎯 Purpose
+## Purpose
+- Provide production-ready agents, commands, and MCP-aware workflows for AI coding assistants
+- Support **Claude Code**, **Codex CLI**, **Factory CLI**, and **GitHub Copilot CLI**
+- Ship factory templates (`.factory/`) alongside active configurations so teams can bootstrap new projects quickly
+- Document best practices for managing sub-agents, hooks, and automation around Context7-driven development
 
-This repository serves as both:
-1. **Documentation Hub**: Up-to-date guides for extending Claude Code functionality
-2. **Extension Library**: Ready-to-use agents, commands, and hooks for development workflows
-3. **Learning Resource**: Examples and best practices for Claude Code customization
+## Supported CLIs
 
-## ⚡ Quick Start
+| CLI | Configuration | Location |
+|-----|--------------|----------|
+| **Claude Code** | Sub-agents + slash commands | `.claude/` |
+| **Codex CLI** | AGENTS.md + commands | `.codex/` |
+| **Factory CLI** | AGENTS.md + droids | `.factory/` |
+| **Copilot CLI** | AGENTS.md + prompts | `.github/` |
+
+## Repository Map
+
+```
+code-agent-octopus/
+├── AGENTS.md                  # Vendor-neutral config (Codex, Factory, Copilot)
+├── CLAUDE.md                  # Claude Code specific guidance
+├── .claude/
+│   ├── agents/                # Claude Code sub-agents
+│   └── commands/              # Slash commands (Context7-enabled)
+├── .codex/
+│   └── commands/              # Codex CLI command mirrors
+├── .factory/
+│   ├── droids/                # Canonical agent templates (source of truth)
+│   └── commands/              # Canonical command templates
+├── .github/
+│   └── prompts/               # GitHub Actions/Copilot prompts
+└── docs/
+    └── claude-code/           # Guides for commands, agents, hooks
+```
+
+## Key Components
+
+- **Planning Agents** (`.factory/droids/planning-agents/*.md`, `.claude/agents/planning-agents/*.md`)  
+  Architecture, testing, deployment, and quality advisors designed to delegate long-form reasoning tasks while staying within Context7 guardrails.
+- **Code Review Agents** (`.factory/droids/code-review-agents/*.md`)  
+  Security, performance, testing, and bug-finding specialists that rely on Context7 lookups for framework-specific guidance.
+- **Research & Memory Commands** (`.factory/commands/research/*.md`, `.factory/commands/context-memory/*.md`)  
+  Provide repeatable flows for consulting Context7, capturing findings, and replaying project memory.
+- **Testing & Tooling Hooks** (`.factory/commands/testing/*.md`, `.claude/commands/testing/*.md`)  
+  Automate Playwright, Chrome DevTools MCP, and quality checks across both CLIs.
+
+## Working With Templates
+
+`.factory/` contains canonical templates that sync to CLI-specific directories:
 
 ```bash
-# Clone the repository
-git clone https://github.com/yourusername/claude-code-octopus.git
-cd claude-code-octopus
+# Sync to Claude Code
+cp -r .factory/droids/* .claude/agents/
+cp -r .factory/commands/* .claude/commands/
 
-# Start using with Claude Code
+# Sync to Codex CLI
+cp -r .factory/commands/* .codex/commands/
+```
+
+**Workflow:**
+1. **Edit in Factory** – Make changes to canonical templates in `.factory/`
+2. **Sync to CLIs** – Copy to CLI-specific directories (`.claude/`, `.codex/`, etc.)
+3. **Validate** – Test in your target CLI
+4. **Contribute Back** – Update `.factory/` when changes prove useful
+
+## Quick Start
+
+### Claude Code
+```bash
 claude
-> /agents  # List available agents
+/agents      # List sub-agents
+/planning:agentic-jira-task-analyze PROJ-123
 ```
 
-## 📚 Documentation
-
-### Core Guides
-- **[Custom Slash Commands](docs/custom-slash-commands.md)** - Create reusable commands
-- **[Sub-Agents Guide](docs/sub-agents-guide.md)** - Build specialized AI assistants
-- **[Hooks Guide](docs/hooks-guide.md)** - Automate workflows with event-driven scripts
-
-### Official Resources
-- [Claude Code Documentation](https://docs.anthropic.com/en/docs/claude-code)
-- [MCP (Model Context Protocol)](https://docs.anthropic.com/en/docs/claude-code/mcp)
-- [CLI Reference](https://docs.anthropic.com/en/docs/claude-code/cli-reference)
-
-## 🗂️ Repository Structure
-
-```
-claude-code-octopus/
-├── .claude/                     # Claude Code configuration (when in use)
-│   ├── agents/                  # Custom sub-agents
-│   ├── commands/                # Custom slash commands
-│   ├── settings.json           # Project settings
-│   └── settings.local.json     # Local settings (gitignored)
-├── docs/                        # Documentation
-│   ├── custom-slash-commands.md # Commands documentation
-│   ├── hooks-guide.md          # Hooks documentation
-│   └── sub-agents-guide.md     # Agents documentation
-├── examples/                    # Example configurations (planned)
-├── LICENSE                      # MIT License
-└── README.md                    # This file
+### Codex/Factory CLI
+```bash
+codex        # or: factory droid code
+# AGENTS.md auto-loads project context
 ```
 
-## 🚀 Features
+### Copilot CLI
+```bash
+gh copilot   # Reads AGENTS.md and .github/copilot-instructions.md
+```
 
-### Sub-Agents
-Specialized AI assistants for specific tasks:
-- **Code Review Agents**: Quality, security, performance analysis
-- **Planning Agents**: Architecture, implementation, testing strategies
-- **Debugging Agents**: Error analysis, root cause identification
-- **Documentation Agents**: README generation, API docs, inline comments
+## Documentation
 
-### Custom Commands
-Reusable slash commands for common tasks:
-- Code review workflows
-- Project planning and estimation
-- Test automation
-- Documentation generation
-- JIRA/GitHub integration
+### Project Docs
+- **[CLAUDE.md](CLAUDE.md)** – Comprehensive guide for Claude Code (architecture, agents, workflows)
+- **[AGENTS.md](AGENTS.md)** – Vendor-neutral config for Codex, Factory, and Copilot CLIs
+- **[Custom Slash Commands](docs/claude-code/custom-slash-commands.md)** – Patterns for reusable workflows
+- **[Sub-Agents Guide](docs/claude-code/sub-agents-guide.md)** – Designing specialized assistants
+- **[Hooks Guide](docs/claude-code/hooks-guide.md)** – Event-driven automation
 
-### Hooks System
-Event-driven automation:
-- Pre/post tool execution hooks
-- File modification triggers
-- Session initialization
-- Security validation
-- Auto-formatting and linting
+### Official References
+- [Claude Code](https://docs.anthropic.com/en/docs/claude-code) · [Codex CLI](https://developers.openai.com/codex/cli) · [Factory CLI](https://docs.factory.ai/factory-cli) · [Copilot CLI](https://docs.github.com/en/copilot/concepts/agents/about-copilot-cli)
+- [Model Context Protocol](https://docs.anthropic.com/en/docs/claude-code/mcp) · [Context7](https://context7.com)
 
-## 🛠️ Installation & Setup
+## Security Notes
 
-### Prerequisites
-- [Claude Code CLI](https://docs.anthropic.com/en/docs/claude-code) installed
-- Git for version control
-- Text editor for creating configurations
-
-### Basic Setup
-1. Clone or fork this repository
-2. Copy example configurations to your project:
-   ```bash
-   cp -r examples/.claude ~/your-project/
-   ```
-3. Customize agents, commands, and hooks for your needs
-4. Test in Claude Code:
-   ```bash
-   claude
-   > /agents  # List your agents
-   ```
-
-## 🔒 Security Considerations
-
-⚠️ **Important**: Extensions execute with your user permissions
-- Review all configurations before use
-- Never run untrusted hooks or commands
-- Use `.claude/settings.local.json` for sensitive data
-- Apply principle of least privilege for tool access
-
-See [Security Best Practices](docs/hooks-guide.md#security-and-best-practices) for details.
-
-## 📝 License
-
-MIT License - see [LICENSE](LICENSE) file for details.
+- Agents and hooks execute with the same permissions as your CLI session; review YAML frontmatter and tool scopes before enabling them.  
+- Keep sensitive credentials out of version control—store them in `.claude/settings.local.json` or environment-specific vaults.  
+- Follow principle of least privilege when enabling MCP servers (Playwright, GitHub, etc.).
