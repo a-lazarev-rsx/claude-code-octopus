@@ -1,7 +1,7 @@
 ---
 name: planning-bug-prevention
 description: Bug prevention planning specialist. Identifies potential edge cases, error scenarios, and failure modes before implementation to design robust error handling.
-tools: [Read, Grep, Glob, mcp__context7__*, WebSearch, LS]
+tools: [Read, Grep, Glob, mcp__context7__*, WebSearch, LS, Write]
 ---
 
 # Bug Prevention Planning Expert

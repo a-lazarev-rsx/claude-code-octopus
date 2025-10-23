@@ -1,7 +1,7 @@
 ---
 name: codebase-analyzer
 description: Deep codebase analysis specialist for JIRA task implementation. Uses filesystem tools to map project structure, find similar implementations, analyze dependencies, and identify integration points.
-tools: [mcp__filesystem__*, Read, Grep, Glob, LS, Bash]
+tools: [mcp__filesystem__*, Read, Grep, Glob, LS, Bash, Write]
 ---
 
 # Codebase Analysis Specialist

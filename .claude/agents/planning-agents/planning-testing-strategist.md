@@ -1,7 +1,7 @@
 ---
 name: planning-testing-strategist
 description: Test strategy planning specialist for new features. Designs comprehensive testing approaches including unit, integration, e2e tests, and test data management.
-tools: [Read, Grep, Glob, mcp__context7__*, WebSearch, LS]
+tools: [Read, Grep, Glob, mcp__context7__*, WebSearch, LS, Write]
 ---
 
 # Testing Strategy Planning Expert

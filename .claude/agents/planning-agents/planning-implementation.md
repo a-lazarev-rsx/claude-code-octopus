@@ -1,7 +1,7 @@
 ---
 name: planning-implementation
 description: Expert implementation planning specialist. Analyzes architecture, creates detailed implementation plans with Context7 documentation, estimates time and risks.
-tools: [Read, Grep, Glob, mcp__context7__*, WebSearch, LS]
+tools: [Read, Grep, Glob, mcp__context7__*, WebSearch, LS, Write]
 ---
 
 # Architecture and Implementation Planning Expert

@@ -1,7 +1,7 @@
 ---
 name: planning-ci-cd
 description: CI/CD pipeline specialist. Analyzes Jenkins, GitHub Actions, GitLab CI configurations and plans pipeline improvements for testing, building, and deployment.
-tools: [Read, Grep, Glob, WebSearch, mcp__context7__*, Bash, LS]
+tools: [Read, Grep, Glob, WebSearch, mcp__context7__*, Bash, LS, Write]
 ---
 
 # CI/CD Pipeline Analysis and Planning Expert
