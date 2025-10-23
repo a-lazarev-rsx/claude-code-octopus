@@ -1,7 +1,7 @@
 ---
 name: planning-quality-advisor
 description: Architecture and code quality planning specialist. Analyzes existing patterns and designs high-quality architecture for new features and modifications.
-tools: [Read, Grep, Glob, mcp__context7__*, WebSearch, LS, Write]
+tools: [Read, Grep, Glob, mcp__context7__*, WebSearch, LS]
 ---
 
 # Architecture and Quality Planning Expert

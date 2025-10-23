@@ -1,7 +1,7 @@
 ---
 name: planning-best-practices
 description: Proactively reviews implemented solutions for best practices, performance issues, and breaking changes using Context7 documentation. Ensures code follows current standards and avoids deprecated patterns.
-tools: [Read, mcp__context7__resolve-library-id, mcp__context7__get-library-docs, Grep, Glob, WebSearch, Write]
+tools: [Read, mcp__context7__resolve-library-id, mcp__context7__get-library-docs, Grep, Glob, WebSearch]
 ---
 
 # Best Practices and Documentation Research Specialist

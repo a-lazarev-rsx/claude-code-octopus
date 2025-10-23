@@ -1,7 +1,7 @@
 ---
 name: planning-performance-architect
 description: Performance architecture planning specialist. Designs high-performance solutions with optimal algorithms, caching strategies, and scalability patterns.
-tools: [Read, Grep, Glob, mcp__context7__*, WebSearch, LS, Write]
+tools: [Read, Grep, Glob, mcp__context7__*, WebSearch, LS]
 ---
 
 # Performance Architecture Planning Expert

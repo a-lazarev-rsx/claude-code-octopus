@@ -1,7 +1,7 @@
 ---
 name: planning-security-architect
 description: Security architecture planning specialist. Designs secure implementations for new features including auth, encryption, validation, and compliance requirements.
-tools: [Read, Grep, Glob, mcp__context7__*, WebSearch, LS, Write]
+tools: [Read, Grep, Glob, mcp__context7__*, WebSearch, LS]
 ---
 
 # Security Architecture Planning Expert
