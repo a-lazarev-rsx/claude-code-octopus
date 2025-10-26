@@ -1,5 +1,6 @@
 ---
 description: Orchestrates multiple specialized sub-agents to perform comprehensive parallel code review
+argument-hint: "[target-branch] (optional: branch to compare against, e.g., main, develop)"
 allowed-tools: Task, Bash
 ---
 
@@ -9,29 +10,43 @@ Performs comprehensive code review by orchestrating multiple specialized sub-age
 
 ## Instructions:
 
-1. First, gather git context for all sub-agents:
-   - Current branch: !`git branch --show-current`
-   - Parent branch detection: !`git merge-base --fork-point main HEAD 2>/dev/null || git merge-base --fork-point master HEAD 2>/dev/null || git merge-base --fork-point develop HEAD 2>/dev/null || echo ""`
-   - List commits: !`git log --oneline HEAD --not $(git merge-base HEAD $(git branch -r | grep -E 'origin/(main|master|develop)' | head -1 | sed 's/origin\///'))`
-   - Get full diff: !`git diff $(git merge-base HEAD $(git branch -r | grep -E 'origin/(main|master|develop)' | head -1 | sed 's/origin\///'))...HEAD`
-   - File statistics: !`git diff --stat $(git merge-base HEAD $(git branch -r | grep -E 'origin/(main|master|develop)' | head -1 | sed 's/origin\///'))...HEAD`
+1. **Determine target branch**:
 
-2. Launch all sub-agents in parallel with the gathered context:
+   **IMPORTANT**: Check if user provided target branch in arguments: $ARGUMENTS
+
+   - If $ARGUMENTS is empty or not provided:
+     * Ask the user: "В какую ветку планируется мерж? (Например: main, develop, master)"
+     * STOP execution and wait for user response
+     * User should re-run the command as: `/code-review:agentic-code-review <target-branch>`
+
+   - If $ARGUMENTS contains a branch name:
+     * Use the provided branch as target_branch
+     * Continue with the review process
+
+2. Gather git context for all sub-agents (using the determined target_branch):
+   - Current branch: !`git branch --show-current`
+   - Verify target branch exists: !`git rev-parse --verify $ARGUMENTS 2>/dev/null || git rev-parse --verify origin/$ARGUMENTS 2>/dev/null || echo "ERROR: Branch not found"`
+   - Parent branch detection: !`git merge-base HEAD $ARGUMENTS 2>/dev/null || git merge-base HEAD origin/$ARGUMENTS 2>/dev/null || echo ""`
+   - List commits: !`git log --oneline HEAD --not $(git merge-base HEAD $(git rev-parse --verify origin/$ARGUMENTS 2>/dev/null || git rev-parse --verify $ARGUMENTS))`
+   - Get full diff: !`git diff $(git merge-base HEAD $(git rev-parse --verify origin/$ARGUMENTS 2>/dev/null || git rev-parse --verify $ARGUMENTS))...HEAD`
+   - File statistics: !`git diff --stat $(git merge-base HEAD $(git rev-parse --verify origin/$ARGUMENTS 2>/dev/null || git rev-parse --verify $ARGUMENTS))...HEAD`
+
+3. Launch all sub-agents in parallel with the gathered context:
 
 Task(
   description="Code quality review",
   subagent_type="code-quality-reviewer",
   prompt=f"""Review code quality for the following changes:
-  
-  Branch: {current_branch} → {parent_branch}
+
+  Branch: {current_branch} → $ARGUMENTS (target branch)
   Commits: {commits_list}
-  
+
   DIFF:
   {git_diff}
-  
+
   FILES CHANGED:
   {file_stats}
-  
+
   IMPORTANT: For EVERY issue found, you MUST provide:
   1. The problematic code snippet
   2. The complete fixed/improved code snippet
@@ -57,18 +72,18 @@ Task(
 
 Task(
   description="Security analysis",
-  subagent_type="security-reviewer", 
+  subagent_type="security-reviewer",
   prompt=f"""Analyze security vulnerabilities in the following changes:
-  
-  Branch: {current_branch} → {parent_branch}
+
+  Branch: {current_branch} → $ARGUMENTS (target branch)
   Commits: {commits_list}
-  
+
   DIFF:
   {git_diff}
-  
+
   FILES CHANGED:
   {file_stats}
-  
+
   IMPORTANT: For EVERY vulnerability found, you MUST provide:
   1. The vulnerable code snippet
   2. The complete secure implementation
@@ -97,16 +112,16 @@ Task(
   description="Performance review",
   subagent_type="performance-reviewer",
   prompt=f"""Review performance implications of the following changes:
-  
-  Branch: {current_branch} → {parent_branch}
+
+  Branch: {current_branch} → $ARGUMENTS (target branch)
   Commits: {commits_list}
-  
+
   DIFF:
   {git_diff}
-  
+
   FILES CHANGED:
   {file_stats}
-  
+
   IMPORTANT: For EVERY performance issue found, you MUST provide:
   1. The slow/inefficient code snippet
   2. The complete optimized implementation
@@ -136,16 +151,16 @@ Task(
   description="Testing assessment",
   subagent_type="testing-reviewer",
   prompt=f"""Assess testing coverage and quality for the following changes:
-  
-  Branch: {current_branch} → {parent_branch}
+
+  Branch: {current_branch} → $ARGUMENTS (target branch)
   Commits: {commits_list}
-  
+
   DIFF:
   {git_diff}
-  
+
   FILES CHANGED:
   {file_stats}
-  
+
   IMPORTANT: For EVERY testing gap found, you MUST provide:
   1. The untested code
   2. Complete test implementation
@@ -177,16 +192,16 @@ Task(
   description="Bug detection",
   subagent_type="bug-detector",
   prompt=f"""Detect potential bugs and edge cases in the following changes:
-  
-  Branch: {current_branch} → {parent_branch}
+
+  Branch: {current_branch} → $ARGUMENTS (target branch)
   Commits: {commits_list}
-  
+
   DIFF:
   {git_diff}
-  
+
   FILES CHANGED:
   {file_stats}
-  
+
   IMPORTANT: For EVERY bug found, you MUST provide:
   1. The buggy code snippet
   2. The complete fixed implementation
@@ -212,7 +227,7 @@ Task(
   """
 )
 
-3. Aggregate results from all sub-agents and present a unified report:
+4. Aggregate results from all sub-agents and present a unified report:
 
 ## Final Report Format:
 
