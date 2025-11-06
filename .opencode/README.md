@@ -45,12 +45,14 @@ This directory contains OpenCode CLI agents and commands, migrated from Claude C
 - **memory-manager** - MCP memory operations and compilation
 - **lint-type-checker** - Background linting and type checking
 
-## Available Commands (19 total)
+## Available Commands (21 total)
 
 ### Planning Commands
 - **/jira-task-analyze** - Single-agent JIRA analysis
-- **/agentic-plan-implementation** - Comprehensive planning with Context7 research
 - **/agentic-jira-task-analyze** - Multi-agent JIRA analysis with codebase deep dive
+- **/github-issue-analyze** - Single-agent GitHub Issue analysis using gh CLI
+- **/agentic-github-issue-analyze** - Multi-agent GitHub Issue analysis with codebase deep dive
+- **/agentic-plan-implementation** - Comprehensive planning with Context7 research
 
 ### Code Review Commands
 - **/pr-review** - Multi-agent PR review (GitHub/Bitbucket)
@@ -93,6 +95,12 @@ Commands are invoked with `/` prefix:
 ```bash
 # Analyze JIRA task
 /agentic-jira-task-analyze PROJ-123
+
+# Analyze GitHub Issue (with issue number)
+/github-issue-analyze 123
+
+# Analyze GitHub Issue (with URL)
+/agentic-github-issue-analyze https://github.com/owner/repo/issues/456
 
 # Review pull request
 /pr-review 456
@@ -279,11 +287,147 @@ When adding new agents or commands:
 4. Test in OpenCode CLI
 5. Document any OpenCode-specific limitations
 
+## GitHub Issue Commands
+
+Two new commands have been added to analyze GitHub Issues using the `gh` CLI instead of JIRA:
+
+### `/github-issue-analyze`
+
+Single-agent comprehensive analysis of GitHub Issues.
+
+**Features:**
+- Auto-detection of input format (issue number or full URL)
+- Uses `gh` CLI for fetching issue data
+- Context7 integration for best practices research
+- Detailed implementation plan with architecture design
+- Conditional deep-dive analysis for security/performance/testing
+
+**Usage:**
+```bash
+# With issue number (uses current repository)
+/github-issue-analyze 123
+
+# With full URL
+/github-issue-analyze https://github.com/owner/repo/issues/456
+```
+
+**Requirements:**
+- `gh` CLI installed and authenticated (`gh auth login`)
+- Read access to the repository and issue
+
+**Output:**
+```
+working-docs/
+└── analysis/
+    └── issue-123/
+        ├── github-issue.md
+        └── IMPLEMENTATION-PLAN.md
+```
+
+### `/agentic-github-issue-analyze`
+
+Multi-agent analysis with specialized agents for different aspects.
+
+**Features:**
+- Sequential execution of specialized agents:
+  - `@codebase-analyzer` - Deep codebase structure analysis
+  - `@planning-implementation` - Architecture and implementation plan
+  - `@planning-testing-strategist` - Testing strategy (conditional)
+  - `@planning-security-architect` - Security design (conditional)
+- Context7 research integrated into all agents
+- Comprehensive final plan compilation
+- 30-50% faster than previous multi-group approach
+
+**Usage:**
+```bash
+# With issue number
+/agentic-github-issue-analyze 789
+
+# With URL
+/agentic-github-issue-analyze https://github.com/myorg/myrepo/issues/101
+```
+
+**Output:**
+```
+working-docs/
+└── analysis/
+    └── issue-789/
+        ├── github-issue.md
+        ├── codebase-analysis.md
+        ├── implementation-draft.md
+        ├── testing-strategy.md (optional)
+        ├── security-architecture.md (optional)
+        └── IMPLEMENTATION-PLAN.md
+```
+
+### Comparison: JIRA vs GitHub Commands
+
+| Feature | JIRA Commands | GitHub Commands |
+|---------|--------------|-----------------|
+| **Data Source** | MCP Atlassian | `gh` CLI |
+| **Input Format** | Issue key or URL | Issue number or URL |
+| **Authentication** | MCP server config | `gh auth login` |
+| **Path Structure** | `working-docs/analysis/PROJ-123/` | `working-docs/analysis/issue-123/` |
+| **Issue Fields** | description, acceptance criteria | body (parsed for criteria) |
+| **Labels** | JIRA labels | GitHub labels |
+| **Assignees** | JIRA assignees | GitHub assignees |
+| **Milestones** | JIRA sprint/epic | GitHub milestone |
+| **Comments** | Can add to JIRA (optional) | Local files only |
+
+### GitHub Issue Body Parsing
+
+GitHub Issue commands parse the issue body to extract:
+
+- **Description**: Full issue body content
+- **Acceptance Criteria**: Detected from:
+  - Checklist items (`- [ ]` / `- [x]`)
+  - Sections marked with `## Acceptance Criteria`
+  - Sections marked with `## Requirements`
+- **Labels**: Used for categorization and complexity analysis
+- **Milestone**: Target release/sprint information
+
+### Error Handling
+
+**Invalid reference:**
+```
+❌ Error: Invalid GitHub Issue reference.
+Please provide a valid GitHub Issue URL or issue number (123).
+```
+
+**gh CLI not available:**
+```
+❌ Error: GitHub CLI (gh) is not available or not authenticated.
+Please install gh CLI and authenticate: gh auth login
+```
+
+**Access denied:**
+```
+❌ Error: Access denied to GitHub Issue #123.
+Please ensure you have read access to the repository.
+```
+
+### Testing GitHub Commands
+
+```bash
+# 1. Verify gh CLI is installed and authenticated
+gh auth status
+
+# 2. Test with a public repository issue
+/github-issue-analyze https://github.com/facebook/react/issues/12345
+
+# 3. Test with private repository (requires auth)
+/agentic-github-issue-analyze 456
+
+# 4. Review generated files
+ls -la working-docs/analysis/issue-*/
+```
+
 ## Documentation
 
 - **Claude Code Specific**: See `CLAUDE.md` in project root
 - **Multi-CLI General**: See `AGENTS.md` in project root
 - **OpenCode Docs**: https://opencode.ai/docs/
+- **GitHub CLI Docs**: https://cli.github.com/manual/
 
 ## License
 
