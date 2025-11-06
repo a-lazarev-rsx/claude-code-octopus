@@ -3,6 +3,7 @@
 **Code Agent Octopus** is a multi-CLI toolkit that provides reusable agents, commands, and workflows for AI coding assistants. This repository serves as a centralized template library supporting:
 
 - **Claude Code** - Anthropic's CLI with sub-agents and slash commands (`.claude/`)
+- **OpenCode** - OpenCode.ai CLI with agents and commands (`.opencode/`)
 - **Codex CLI** - OpenAI's CLI with AGENTS.md configuration (`.codex/`)
 - **Factory CLI** - Factory.ai's CLI with specialized Droids (`.factory/`)
 - **GitHub Copilot CLI** - GitHub's CLI that reads multiple instruction formats (`.github/`)
@@ -25,6 +26,7 @@ Both files coexist to support all tools. See `AGENTS.md` for build commands and 
 | CLI Tool | Reads | Format | Location |
 |----------|-------|--------|----------|
 | **Claude Code** | `CLAUDE.md` | Markdown with detailed sections | Root directory (auto-loaded) |
+| **OpenCode** | `AGENTS.md`, `.opencode/agent/`, `.opencode/command/` | YAML frontmatter + Markdown | `.opencode/` directory |
 | **Codex CLI** | `AGENTS.md` | Plain Markdown with semantic headings | Root directory (auto-loaded) |
 | **Factory CLI** | `AGENTS.md` | Plain Markdown (same as Codex) | Root directory (auto-loaded) |
 | **Copilot CLI** | `AGENTS.md`, `CLAUDE.md`, `.github/copilot-instructions.md` | Markdown with natural language | Multiple locations |
@@ -33,7 +35,7 @@ Both files coexist to support all tools. See `AGENTS.md` for build commands and 
 
 ```
 code-agent-octopus/
-├── AGENTS.md                   # Vendor-neutral config (Codex, Factory, Copilot)
+├── AGENTS.md                   # Vendor-neutral config (Codex, Factory, Copilot, OpenCode)
 ├── CLAUDE.md                   # This file - Claude Code specific
 ├── .claude/
 │   ├── agents/                 # Claude Code sub-agents (YAML + Markdown)
@@ -46,6 +48,11 @@ code-agent-octopus/
 │   │   ├── research/           # /research:use-context7
 │   │   └── context-memory/     # /context-memory:add-memory
 │   └── settings.local.json     # Local config (gitignored)
+├── .opencode/
+│   ├── agent/                  # OpenCode agents (flat structure, 19 total)
+│   ├── command/                # OpenCode commands (flat structure, 19 total)
+│   ├── migrate_from_claude.py  # Auto-migration script
+│   └── README.md               # OpenCode-specific documentation
 ├── .codex/
 │   └── commands/               # Codex CLI command mirrors (same as .claude/commands)
 ├── .factory/
@@ -270,12 +277,13 @@ claude
 
 Different CLIs have different formats:
 
-| Feature | Claude Code | Codex/Factory CLI | Copilot CLI |
-|---------|-------------|-------------------|-------------|
-| **Agent Format** | YAML frontmatter + Markdown | N/A (uses AGENTS.md) | `.github/prompts/*.md` |
-| **Command Format** | YAML frontmatter + Markdown | Plain Markdown | Plain Markdown |
-| **Tool Permissions** | `allowed-tools` in frontmatter | CLI flags `--allow-tool` | CLI flags `--allow-tool` |
-| **MCP Support** | Native MCP integration | MCP via Agents SDK | MCP servers |
+| Feature | Claude Code | OpenCode | Codex/Factory CLI | Copilot CLI |
+|---------|-------------|----------|-------------------|-------------|
+| **Agent Format** | YAML frontmatter + Markdown | YAML frontmatter + Markdown | N/A (uses AGENTS.md) | `.github/prompts/*.md` |
+| **Command Format** | YAML frontmatter + Markdown | YAML frontmatter + Markdown | Plain Markdown | Plain Markdown |
+| **Tool Permissions** | `allowed-tools` in frontmatter | `permission` map (tri-state) | CLI flags `--allow-tool` | CLI flags `--allow-tool` |
+| **MCP Support** | Native MCP integration | Native MCP + wildcards | MCP via Agents SDK | MCP servers |
+| **Orchestration** | Parallel via Task tool | Sequential via @ mentions | Manual | Manual |
 
 ### Maintaining Consistency
 
@@ -283,9 +291,10 @@ When updating templates:
 
 1. **Update `.factory/`** first (canonical source)
 2. **Sync to `.claude/`** for Claude Code agents/commands
-3. **Sync to `.codex/`** for Codex CLI commands (if format compatible)
-4. **Update `AGENTS.md`** for general conventions shared across CLIs
-5. **Update this file** (`CLAUDE.md`) for Claude Code-specific guidance
+3. **Sync to `.opencode/`** using migration script: `python3 .opencode/migrate_from_claude.py`
+4. **Sync to `.codex/`** for Codex CLI commands (if format compatible)
+5. **Update `AGENTS.md`** for general conventions shared across CLIs
+6. **Update this file** (`CLAUDE.md`) for Claude Code-specific guidance
 
 ## Development Patterns
 
@@ -427,6 +436,14 @@ factory droid code
 # Use factory templates from .factory/droids/
 ```
 
+### Using OpenCode CLI
+```bash
+opencode
+# Agents and commands auto-loaded from .opencode/
+# Agent invocation: @agent-name
+/agentic-jira-task-analyze PROJ-123
+```
+
 ### Using Copilot CLI
 ```bash
 gh copilot
@@ -434,13 +451,130 @@ gh copilot
 # Use for GitHub-integrated workflows
 ```
 
+## OpenCode Integration
+
+### Overview
+
+OpenCode support was added to provide compatibility with the OpenCode.ai CLI. All Claude Code agents and commands have been migrated to OpenCode format in the `.opencode/` directory.
+
+### Key Differences: Claude Code vs OpenCode
+
+| Feature | Claude Code | OpenCode |
+|---------|-------------|----------|
+| **Directory Structure** | Nested (`.claude/agents/planning-agents/`) | Flat (`.opencode/agent/`) |
+| **Command Naming** | Namespace-based (`/planning:cmd`) | Hyphenated (`/cmd`) |
+| **Agent Invocation** | `Task(subagent_type="X")` | `@X` mention syntax |
+| **Execution Model** | Parallel agents supported | Sequential only (~40-50% slower) |
+| **Tool Format** | Array (`tools: [Read, Write]`) | Boolean map (`tools: {read: true}`) |
+| **Permissions** | Simple (`allowed-tools`) | Tri-state (allow/ask/deny + bash granularity) |
+| **Mode System** | Implicit | Explicit (primary/subagent/all) |
+| **Wildcard Tools** | Not supported | Supported (`mcp__context7__*: true`) |
+
+### Migration Strategy
+
+The `.opencode/` directory is auto-generated from `.claude/` using the migration script:
+
+```bash
+python3 .opencode/migrate_from_claude.py
+```
+
+**Workflow:**
+1. Create/modify agents in `.claude/agents/`
+2. Test in Claude Code
+3. Run migration script
+4. Test in OpenCode CLI
+5. Commit both versions
+
+### OpenCode-Specific Features
+
+**1. Permission Granularity**
+```yaml
+permission:
+  bash:
+    "git add *": allow
+    "git commit *": allow
+    "git push *": ask      # Require confirmation
+    "rm -rf *": deny       # Block dangerous commands
+```
+
+**2. Mode System**
+```yaml
+mode: primary      # For main interactive agents
+mode: subagent     # For specialized reviewers
+mode: all          # Available in both contexts (default)
+```
+
+**3. Temperature Control**
+```yaml
+temperature: 0.1   # For deterministic analysis
+temperature: 0.8   # For creative exploration
+```
+
+### OpenCode Agent Permissions
+
+**Agents with Write Permission (9 agents):**
+- planning-implementation
+- codebase-analyzer
+- planning-quality-advisor
+- planning-security-architect
+- planning-testing-strategist
+- planning-ci-cd
+- planning-performance-architect
+- planning-bug-prevention
+- planning-documentation
+
+These agents create analysis artifacts and have `bash."*": allow`.
+
+**Review Agents (10 agents):**
+All other agents use conservative `bash."*": ask` for safety.
+
+### OpenCode Command Adaptations
+
+Commands are adapted for sequential execution:
+
+**Claude Code (parallel):**
+```markdown
+Launch agents in parallel:
+- Task(subagent_type="codebase-analyzer")
+- Task(subagent_type="planning-implementation")
+```
+
+**OpenCode (sequential):**
+```markdown
+Step 1: @codebase-analyzer Analyze codebase...
+Step 2: @planning-implementation Create plan using findings...
+```
+
+### Testing OpenCode Integration
+
+```bash
+# Verify agent availability
+opencode
+@planning-implementation Create plan for user auth
+
+# Test command
+/agentic-jira-task-analyze PROJ-123
+
+# Test Context7 integration
+@planning-implementation Research FastAPI patterns using Context7
+```
+
+### Documentation
+
+- **OpenCode README**: [.opencode/README.md](.opencode/README.md)
+- **Migration Script**: [.opencode/migrate_from_claude.py](.opencode/migrate_from_claude.py)
+- **Official Docs**: https://opencode.ai/docs/
+
 ## Contributing Back to Factory
 
 When you improve an agent or command:
 
-1. Test in your target CLI (Claude Code, Codex, etc.)
+1. Test in your target CLI (Claude Code, OpenCode, Codex, etc.)
 2. Update the canonical source in `.factory/`
-3. Sync to other CLI directories if applicable
+3. Sync to other CLI directories:
+   - `.claude/` for Claude Code
+   - Run `python3 .opencode/migrate_from_claude.py` for OpenCode
+   - `.codex/` for Codex CLI (if applicable)
 4. Update both `AGENTS.md` and `CLAUDE.md` as needed
 5. Document CLI-specific quirks in this file
 6. Create PR with validation notes from multiple CLIs
